@@ -2,6 +2,10 @@
 #define PIN_LED_GROUP_0   8L
 #define PIN_LED_GROUP_1   9L
 #define PIN_LATCH         10L
+#define PIN_BTN1   2L
+#define PIN_BTN2   3L
+#define PIN_BTN3   7L
+
 #define TIMER1_INTERVAL_MS    3L
 
 #define USE_TIMER_1     true
@@ -9,11 +13,14 @@
 #include <SPI.h>
 
 uint16_t g_iLEDDataGroup0 = 0x0000;
-uint16_t g_iLEDDataGroup1 = 0x4355;
+uint16_t g_iLEDDataGroup1 = 0x0000;
 uint8_t g_iLEDGroup = 0;
 
  
 void TimerHandler1(unsigned int param);
+void Button1Pressed();
+void Button2Pressed();
+void Button3Pressed();
 
 
 inline void LEDGroupControl(uint8_t iGroup, bool bOn)
@@ -51,6 +58,14 @@ void setup()
   pinMode(16, OUTPUT); // SPI MOSI
   pinMode(14, INPUT);  // SPI MISO
 
+
+  pinMode(PIN_BTN1, INPUT_PULLUP); 
+  pinMode(PIN_BTN2, INPUT_PULLUP); 
+  pinMode(PIN_BTN3, INPUT_PULLUP); 
+  attachInterrupt(digitalPinToInterrupt(PIN_BTN1), Button1Pressed, RISING);
+  attachInterrupt(digitalPinToInterrupt(PIN_BTN2), Button2Pressed, RISING);
+  attachInterrupt(digitalPinToInterrupt(PIN_BTN3), Button3Pressed, RISING);
+
   digitalWrite(PIN_LED_GROUP_0, HIGH);
   digitalWrite(PIN_LED_GROUP_1, HIGH);
   digitalWrite(PIN_LATCH, LOW);
@@ -69,16 +84,49 @@ void setup()
 // the loop function runs over and over again forever
 void loop() 
 {
-  
-
-  
-   delay(500);
-
-  g_iLEDDataGroup0++;
-  g_iLEDDataGroup1++;  
-   
+   delay(500);   
 }
 
+
+void Button1Pressed()
+{
+  static unsigned long iLastInterrupt = 0;
+  unsigned long iTimeNow = millis();
+  if (iTimeNow - iLastInterrupt < 100) 
+  {
+    return;
+  }
+  iLastInterrupt = iTimeNow;  
+  
+  g_iLEDDataGroup0++;
+}
+
+void Button2Pressed()
+{
+  static unsigned long iLastInterrupt = 0;
+  unsigned long iTimeNow = millis();
+  if (iTimeNow - iLastInterrupt < 100) 
+  {
+    return;
+  }
+  iLastInterrupt = iTimeNow;   
+  
+  g_iLEDDataGroup0++;  
+  g_iLEDDataGroup1++;  
+}
+
+void Button3Pressed()
+{
+  static unsigned long iLastInterrupt = 0;
+  unsigned long iTimeNow = millis();
+  if (iTimeNow - iLastInterrupt < 100) 
+  {
+    return;
+  }
+  iLastInterrupt = iTimeNow; 
+    
+  g_iLEDDataGroup1++;  
+}
 
 
 void TimerHandler1(unsigned int param)
@@ -89,5 +137,4 @@ void TimerHandler1(unsigned int param)
   LEDWriteData(g_iLEDGroup ? g_iLEDDataGroup1 : g_iLEDDataGroup0);
  
   g_iLEDGroup = !g_iLEDGroup;
- 
 }
