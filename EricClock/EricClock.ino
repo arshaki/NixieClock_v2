@@ -21,6 +21,8 @@ void TimerHandler1(unsigned int param);
 void Button1Pressed();
 void Button2Pressed();
 void Button3Pressed();
+void SetNumberGroup(uint8_t iGroup, uint8_t iNumber);
+uint8_t ConvertDigitToNumber(uint8_t iNumber);
 
 
 inline void LEDGroupControl(uint8_t iGroup, bool bOn)
@@ -84,9 +86,16 @@ void setup()
 // the loop function runs over and over again forever
 void loop() 
 {
-   delay(500);   
+  for(int i = 0; i < 99; ++i)
+  {
+      //SetNumberGroup(1, i);
+      //SetNumberGroup(0, i);
+      delay(200);
+  }
+      
 }
 
+uint8_t iTemp = 0;
 
 void Button1Pressed()
 {
@@ -98,7 +107,8 @@ void Button1Pressed()
   }
   iLastInterrupt = iTimeNow;  
   
-  g_iLEDDataGroup0++;
+  iTemp++;
+  SetNumberGroup(1, iTemp);
 }
 
 void Button2Pressed()
@@ -111,8 +121,8 @@ void Button2Pressed()
   }
   iLastInterrupt = iTimeNow;   
   
-  g_iLEDDataGroup0++;  
-  g_iLEDDataGroup1++;  
+  iTemp = 0;
+  SetNumberGroup(1, iTemp);
 }
 
 void Button3Pressed()
@@ -125,7 +135,8 @@ void Button3Pressed()
   }
   iLastInterrupt = iTimeNow; 
     
-  g_iLEDDataGroup1++;  
+  iTemp--; 
+  SetNumberGroup(1, iTemp);
 }
 
 
@@ -138,3 +149,72 @@ void TimerHandler1(unsigned int param)
  
   g_iLEDGroup = !g_iLEDGroup;
 }
+
+void SetNumberGroup(uint8_t iGroup, uint8_t iNumber)
+{
+  int8_t iDigit0 = 0;
+  int8_t iDigit1 = 0;
+
+  iDigit0 = iNumber/10;
+  iDigit1 = iNumber%10;
+
+  uint16_t iLEDDigit0 = ConvertDigitToNumber(iDigit0);
+  uint16_t iLEDDigit1 = ConvertDigitToNumber(iDigit1);
+  iLEDDigit1 *= 256;
+
+  uint16_t oLEDFinal = iLEDDigit0 | iLEDDigit1;
+
+  if (iGroup == 0)
+  {
+    g_iLEDDataGroup0 = oLEDFinal;
+  }
+  else  if (iGroup == 1)
+  {
+    g_iLEDDataGroup1 = oLEDFinal;
+  }
+}
+
+uint8_t ConvertDigitToNumber(uint8_t iNumber)
+{
+  if(iNumber == 0)
+  {
+    return 0x3F;
+  }
+  else if(iNumber == 1)
+  {
+    return 0x6;
+  }
+  else if(iNumber == 2)
+  {
+    return 0x5B;
+  }
+  else if(iNumber == 3)
+  {
+    return 0x4F;
+  }
+  else if(iNumber == 4)
+  {
+    return 0x66;
+  }
+  else if(iNumber == 5)
+  {
+    return 0x6D;
+  }
+  else if(iNumber == 6)
+  {
+    return 0x7D;
+  }
+  else if(iNumber == 7)
+  {
+    return 0x7;
+  }
+  else if(iNumber == 8)
+  {
+    return 0x7F;
+  }
+  else if(iNumber == 9)
+  {
+    return 0x6F;
+  }
+}
+
