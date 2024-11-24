@@ -6,7 +6,8 @@
 #define PIN_BTN2   3L
 #define PIN_BTN3   7L
 
-#define TIMER1_INTERVAL_MS    3L
+#define TIMER1_INTERVAL_MS    4L
+#define TIMER1SEC_COUNT     250L
 
 #define USE_TIMER_1     true
 #include "TimerInterrupt.h"
@@ -15,14 +16,24 @@
 uint16_t g_iLEDDataGroup0 = 0x0000;
 uint16_t g_iLEDDataGroup1 = 0x0000;
 uint8_t g_iLEDGroup = 0;
+bool g_StopwatchRunning = false;
+uint32_t g_iStopwatchCounterSec = 0;
+uint32_t g_i1SecCounter = 0;
 
  
 void TimerHandler1(unsigned int param);
+void TimerHandler1Sec(unsigned int param);
+void Button1PressedrRaw();
+void Button2PressedRaw();
+void Button3PressedRaw();
 void Button1Pressed();
 void Button2Pressed();
 void Button3Pressed();
+
 void SetNumberGroup(uint8_t iGroup, uint8_t iNumber);
 uint8_t ConvertDigitToNumber(uint8_t iNumber);
+
+void SetNumberMinSec(uint32_t iSec);
 
 
 inline void LEDGroupControl(uint8_t iGroup, bool bOn)
@@ -64,9 +75,9 @@ void setup()
   pinMode(PIN_BTN1, INPUT_PULLUP); 
   pinMode(PIN_BTN2, INPUT_PULLUP); 
   pinMode(PIN_BTN3, INPUT_PULLUP); 
-  attachInterrupt(digitalPinToInterrupt(PIN_BTN1), Button1Pressed, RISING);
-  attachInterrupt(digitalPinToInterrupt(PIN_BTN2), Button2Pressed, RISING);
-  attachInterrupt(digitalPinToInterrupt(PIN_BTN3), Button3Pressed, RISING);
+  attachInterrupt(digitalPinToInterrupt(PIN_BTN1), Button1PressedRaw, RISING);
+  attachInterrupt(digitalPinToInterrupt(PIN_BTN2), Button2PressedRaw, RISING);
+  attachInterrupt(digitalPinToInterrupt(PIN_BTN3), Button3PressedRaw, RISING);
 
   digitalWrite(PIN_LED_GROUP_0, HIGH);
   digitalWrite(PIN_LED_GROUP_1, HIGH);
@@ -78,7 +89,6 @@ void setup()
   ITimer1.init(1);
   unsigned int iTimerParam = 0;
   ITimer1.attachInterruptInterval(TIMER1_INTERVAL_MS, TimerHandler1, iTimerParam);
-
   
 }
 
@@ -99,6 +109,45 @@ uint8_t iTemp = 0;
 
 void Button1Pressed()
 {
+  g_StopwatchRunning = !g_StopwatchRunning;
+  Serial.print(g_StopwatchRunning);
+  Serial.println(" Button1Pressed");
+}
+
+void Button2Pressed()
+{
+   
+}
+
+void Button3Pressed()
+{
+  g_iStopwatchCounterSec = 0;
+  
+}
+
+
+void TimerHandler1Sec(unsigned int param)
+{
+  Serial.println(" Timer 1 sec");
+
+   if(g_StopwatchRunning)
+   {
+    g_iStopwatchCounterSec++;
+   }
+
+  SetNumberMinSec(g_iStopwatchCounterSec);
+}
+
+void SetNumberMinSec(uint32_t iSec)
+{
+  int32_t iDisplaySec = iSec % 60;
+  int32_t iDisplayMin = iSec / 60;
+  SetNumberGroup(1, iDisplaySec);
+  SetNumberGroup(0, iDisplayMin);
+}
+
+void Button1PressedRaw()
+{
   static unsigned long iLastInterrupt = 0;
   unsigned long iTimeNow = millis();
   if (iTimeNow - iLastInterrupt < 100) 
@@ -107,11 +156,10 @@ void Button1Pressed()
   }
   iLastInterrupt = iTimeNow;  
   
-  iTemp++;
-  SetNumberGroup(1, iTemp);
+  Button1Pressed();
 }
 
-void Button2Pressed()
+void Button2PressedRaw()
 {
   static unsigned long iLastInterrupt = 0;
   unsigned long iTimeNow = millis();
@@ -121,11 +169,10 @@ void Button2Pressed()
   }
   iLastInterrupt = iTimeNow;   
   
-  iTemp = 0;
-  SetNumberGroup(1, iTemp);
+  Button2Pressed();
 }
 
-void Button3Pressed()
+void Button3PressedRaw()
 {
   static unsigned long iLastInterrupt = 0;
   unsigned long iTimeNow = millis();
@@ -135,19 +182,25 @@ void Button3Pressed()
   }
   iLastInterrupt = iTimeNow; 
     
-  iTemp--; 
-  SetNumberGroup(1, iTemp);
+  Button3Pressed();
 }
 
 
 void TimerHandler1(unsigned int param)
 {
-   
   LEDGroupControl(g_iLEDGroup, 1);
   LEDGroupControl(!g_iLEDGroup, 0);
   LEDWriteData(g_iLEDGroup ? g_iLEDDataGroup1 : g_iLEDDataGroup0);
  
   g_iLEDGroup = !g_iLEDGroup;
+
+  // call 1 sec timer
+  g_i1SecCounter++;
+  if(g_i1SecCounter == TIMER1SEC_COUNT)
+  {
+    TimerHandler1Sec(0);
+    g_i1SecCounter = 0;
+  }
 }
 
 void SetNumberGroup(uint8_t iGroup, uint8_t iNumber)
