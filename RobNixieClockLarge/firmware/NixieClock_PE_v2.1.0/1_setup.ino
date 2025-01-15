@@ -26,33 +26,42 @@ void setup()
   
   digitalWrite(GEN, 0);                           // устранение возможного "залипания" выхода генератора
  
-
   // настройка быстрого чтения аналогового порта (mode 4)
   sbi(ADCSRA, ADPS2);
   cbi(ADCSRA, ADPS1);
   cbi(ADCSRA, ADPS0);
   analogRead(A6);                                 // устранение шума
   analogRead(A7);
-  // ------------------
 
-      
-  // задаем частоту ШИМ на 9 и 10 выводах 31 кГц
+
+  curIndi = 0;
+  for(int i = 0; i < NUMTUB; ++i)
+  {
+    indiDimm[i] = MAX_BRIGHTNESS;
+    indiCounter[i] = 0;
+    indiDigits[i] = i;
+  }
+
+  
   TCCR1B = TCCR1B & 0b11111000 | 1;               // ставим делитель 1
+  TCCR2B = (TCCR2B & B11111000) | 2;    // делитель 8
+  TCCR2A |= (1 << WGM21);   // включить CTC режим для COMPA
+  TIMSK2 |= (1 << OCIE2A);  // включить прерывания по совпадению COMPA 
+  
 
-  // перенастраиваем частоту ШИМ на пинах 3 и 11 для соответствия таймеру 0
-  // Пины D3 и D11 - 980 Гц
-  TCCR2B = 0b00000011;                            // x32
-  TCCR2A = 0b00000001;                            // phase correct
+
+
 
   // EEPROM
   if (EEPROM.read(1023) != 103) 
   {                 // первый запуск
     EEPROM.put(1023, 103);
   }
- 
 
-  // включаем ШИМ
-  r_duty = DUTY;
-  setPWM(GEN, r_duty);
- 
+
+  // turn on the DC-DC PWM
+  setPWM(GEN, DUTY);
+
+
+
 }

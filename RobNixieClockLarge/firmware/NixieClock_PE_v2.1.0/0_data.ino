@@ -4,20 +4,6 @@
 #include <EEPROM.h>
 
 
-volatile int8_t indiDigits[NUMTUB];               // цифры, которые должны показать индикаторы (0-10)
-volatile int8_t curIndi;                          // текущий индикатор (0-5)
-
-
-/* регулировка напряжения */
-const uint8_t iduty = 10;                         // период интегрирования ошибки напряжения
-uint8_t idcounter = 0;                            // текущий период интегрирования
-const int8_t maxerrduty = 10;                     // максимальное значение интегрированной ошибки напряжения
-int duty_delta = 0;                               // текущая интегральная ошибка
-const int nominallevel = 550;                     // номинальное значение напряжения
-const uint8_t maxduty = 220;                      // защита от чрезмерного повышения напряжения
-const uint8_t minduty = 10;                       // защита от выключения
-uint8_t r_duty;                                   // актуальная скважность ШИМ анодного напряжения
-int8_t startup_delay = 5;                         // задержка в применении нового значения ШИМ после запуска
 
 /* макроопределения битовых операций */
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit)) 
@@ -36,8 +22,6 @@ boolean currentDigit = false;
 int8_t changeHrs, changeMins;
 
 
-byte anodeStates = 0x3F;                          // в оригинальном скетче было массивом логических переменных
-                                                  // заменено на байт, биты (начиная с 0), которого определяют
            
 byte currentLamp, flipEffectStages;
 bool trainLeaving;
@@ -48,8 +32,10 @@ bool trainLeaving;
  *    byte х: значение, в которое устанавливается pin (0 или 1)
  *  Выходные параметры: нет
  */
-void setPin(byte pin, byte x) {
-  switch (pin) {                                  // откл pwm
+void setPin(byte pin, byte x) 
+{
+  switch (pin) 
+  {                                  // откл pwm
     case 3:                                       // 2B
       bitClear(TCCR2A, COM2B1);
       break;
@@ -84,10 +70,13 @@ void setPin(byte pin, byte x) {
  *    byte duty: относительное значение длительности импульса на выбранном pin
  *  Выходные параметры: нет
  */
-void setPWM(byte pin, byte duty) {
+void setPWM(byte pin, byte duty) 
+{
   if (duty == 0) setPin(pin, LOW);
-  else {
-    switch (pin) {
+  else 
+  {
+    switch (pin)
+    {
       case 5:
         bitSet(TCCR0A, COM0B1);
         OCR0B = duty;
